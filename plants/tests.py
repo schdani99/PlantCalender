@@ -66,5 +66,40 @@ class PlantApiTests(TestCase):
         response = self.client.get(f"/api/plants/{plant.id}/")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_user_sees_public_plant_of_public_profile(self):
+    self.other.is_profile_public = True
+    self.other.save()
+    Plant.objects.create(
+        owner=self.other, name="Fikusz", visibility=Plant.Visibility.PUBLIC
+    )
+    self.client.force_authenticate(self.user)
+
+    response = self.client.get("/api/plants/?owner=geza")
+
+    self.assertEqual(response.status_code, status.HTTP_200_OK)
+    self.assertEqual(len(response.data), 1)
+
+def test_private_plant_of_other_user_is_hidden(self):
+    self.other.is_profile_public = True
+    self.other.save()
+    Plant.objects.create(owner=self.other, name="Titkos")  # alapból private
+    self.client.force_authenticate(self.user)
+
+    response = self.client.get("/api/plants/?owner=geza")
+
+    self.assertEqual(len(response.data), 0)
+
+def test_cannot_edit_other_users_public_plant(self):
+    self.other.is_profile_public = True
+    self.other.save()
+    plant = Plant.objects.create(
+        owner=self.other, name="Fikusz", visibility=Plant.Visibility.PUBLIC
+    )
+    self.client.force_authenticate(self.user)
+
+    response = self.client.patch(f"/api/plants/{plant.id}/", {"name": "Hacked"})
+
+    self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
         
         
